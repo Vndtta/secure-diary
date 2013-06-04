@@ -23,4 +23,5 @@ Diary to log experiences, movies, songs, photos...
 
 # Install
 Create a truecrypt container and enter it's path into sdy
+
     CONTAINER=/path/to/container
