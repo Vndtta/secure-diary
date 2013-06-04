@@ -1,0 +1,183 @@
+#!/bin/bash
+#---------------------------------
+#Diary to log experiences, movies, songs, photos...
+#Started:  15:28 31/05/13
+#Finished:
+#Version:  Developing
+#Author:   Vndtta
+#---------------------------------
+
+#---------------------------------
+#---------------------------------
+# Dependencies
+# 	- Truecrypt
+#	- Vim
+
+# Hypotesis
+
+# To-Do
+#	- Movielog
+#	- Booklog
+#	- Function to write something about the past
+
+# Improvements
+#	-
+
+#---------------------------------
+#---------------------------------
+
+# User variables
+CONTAINER=/media/Datos/Documents/.Diary
+DY_TRANSFER="/home/saos/Documents/Dy.transfer"
+
+# Variables
+PROGNAME=$(basename $0)
+
+## Directory Variables
+MOUNT_DIR=/media/.Diary
+DIARY="$MOUNT_DIR/Diary.txt"
+VIMRC="$MOUNT_DIR/.vimrc"
+TREASURE_DIR="$MOUNT_DIR/Treasure"
+
+
+
+# Functions
+usage () {
+	#--------------------------------------------------------------------------------------------------------------
+	# Input:  None
+	# Output: Help Message in stdout
+	# Use:    Creates a help message
+	#--------------------------------------------------------------------------------------------------------------
+	cat <<-_EOF_
+	Usage: $PROGNAME 
+	Diary to log experiences, movies, songs, photos...
+
+	   -d, --diary			Write the entry on the diary
+	   -h, --help			Display this message
+	   -m, --movie			Write an entry about a movie
+	   -t, --treasure file[s]	Load file[s] into the treasure
+	   -q, --quit			Disconnect and encrypt the container
+
+	Example: $PROGNAME -t '/path/to/file' -d -q 
+		That will load a file in the treasure, then write a diary entry and then disconnect
+	Calm Down and Keep Seeding, you Monster, for Science!
+	_EOF_
+	exit
+}
+
+diarylog (){
+	#--------------------------------------------------------------------------------------------------------------
+	# Input:  None
+	# Output: None
+	# Use:    Write diary entry in $DIARY date;mood;music;treasure_file;diary_entry 
+	#--------------------------------------------------------------------------------------------------------------
+	clear
+	WRITE_TEMP=$(mktemp)
+
+	# Gathering the information
+	DATE=$(date +"%R %d/%m/%y")
+	read -p "How do you feel today?: " mood
+	read -p "What are you listening to?: " music
+	read -n1 -p "If you want to add any file to your treasure press s: " choice
+	if [[ $choice == s ]]; then
+		while true;do
+			read -p "Please enter the path of the file: " treasure
+			TREASURE_FILE="$(echo $treasure | rev | cut -d '/' -f1 | rev)"
+			if [[ -f $treasure ]]; then
+				cp $treasure $TREASURE_DIR
+				break
+			elif [[ -f "$(pwd)/$treasure" ]]; then
+				cp "$(pwd)/$treasure" $TREASURE_DIR
+				break
+			elif [[ $treasure == q ]]; then
+				break
+			else
+				echo "File not found. Press q to quit"
+			fi
+		done
+	fi
+	echo "Loading the Diary entry"
+	sleep 0.5
+	vim -u "$VIMRC" $WRITE_TEMP
+
+	# Storing it to the Diary
+	echo "$DATE;diary;$mood;$music;$TREASURE_FILE;$(cat $WRITE_TEMP | tr '\n' '^')" >> $DIARY 
+
+	[[ -f $WRITE_TEMP ]] && rm $WRITE_TEMP
+	return
+}
+
+treasureupload (){
+	#--------------------------------------------------------------------------------------------------------------
+	# Input:  Files to process
+	# Output: None
+	# Use:    Copy the files to treasure and log it
+	#--------------------------------------------------------------------------------------------------------------
+
+	DATE=$(date +"%R %d/%m/%y")
+	# Copy the files
+	for i in "${files[@]}";do
+		cp "$i" "$TREASURE_DIR"/
+		echo "$DATE;treasure;$(echo $i | rev | cut -d '/' -f1 | rev)" >> $DIARY
+	done
+	return
+}
+
+
+
+# Body
+
+[[ $1 == -h || $1 == --help ]] && usage
+## Initial Check
+if [[ -f $CONTAINER && -d $MOUNT_DIR ]];then
+	truecrypt --mount "$CONTAINER" "$MOUNT_DIR" 
+else
+	echo "The container file $CONTAINER or the mount directory $MOUNT_DIR doesn't exist"
+fi
+[[ ! -d "$TREASURE_DIR" ]] && echo "The directory for the treasure doesn't exist, creating one." && mkdir "$TREASURE_DIR"
+
+[[ -f "$DY_TRANSFER" ]] && cat "$DY_TRANSFER" >> $DIARY && rm "$DY_TRANSFER"
+
+# Check if .vimrc exist
+[[ ! -f "$VIMRC" ]] && echo ":set nocp" >> "$VIMRC"
+
+
+DISCONNECT=0
+## Testing the input of the program
+while [[ -n "$1" ]];do  
+	case $1 in
+		-d|--diary)	shift
+				diarylog
+				;;
+		-b|--book)	shift
+				booklog
+				;;
+		-m|--movie)	shift
+				movielog
+				;;
+		-t| --treasure)	shift
+				[[ -n $(echo $1 | grep -) && -z $1 ]] && echo "Please select at least a file" && exit
+				while [[ -z $(echo $1 | grep -) && -n $1 ]];do
+					files+=( "$1" )
+					shift
+				done
+				treasureupload 
+				;;
+		-q| --quit)	shift
+				DISCONNECT=1
+				truecrypt -d "$MOUNT_DIR"
+				;;
+		-h|--help)	shift
+				usage
+				exit
+				;;
+	esac
+done
+
+if [[ $DISCONNECT -eq 0 ]]; then
+	read -p "Do you want to close the diary?: " choice
+	case $choice in
+		no|n)	exit;;
+		*)	truecrypt -d "$MOUNT_DIR";;
+	esac
+fi
