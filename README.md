@@ -18,8 +18,8 @@ Diary to log experiences, movies, songs, photos...
     That will load a file in the treasure, then write a diary entry and then disconnect
 
 # Dependencies
-    - [Truecrypt](http://www.truecrypt.org/downloads)
-    - Vim
+- [Truecrypt](http://www.truecrypt.org/downloads)
+- Vim
 
 # Install
 Execute `./install` it may need sudo privileges
