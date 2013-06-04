@@ -26,18 +26,17 @@
 #---------------------------------
 #---------------------------------
 
-# User variables
-CONTAINER=/media/Datos/Documents/.Diary
-DY_TRANSFER="/home/saos/Documents/Dy.transfer"
 
 # Variables
 PROGNAME=$(basename $0)
 
 ## Directory Variables
+CONTAINER=~/Documents/.Diary
 MOUNT_DIR=/media/.Diary
 DIARY="$MOUNT_DIR/Diary.txt"
 VIMRC="$MOUNT_DIR/.vimrc"
 TREASURE_DIR="$MOUNT_DIR/Treasure"
+DY_TRANSFER=~/Documents/Dy.transfer
 
 
 

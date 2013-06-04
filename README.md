@@ -14,7 +14,7 @@ Diary to log experiences, movies, songs, photos...
     -t, --treasure file[s]	Load file[s] into the treasure
     -q, --quit			Disconnect and encrypt the container
 
-    Example: $PROGNAME -t '/path/to/file' -d -q 
+    Example: sdy -t '/path/to/file' -d -q 
     That will load a file in the treasure, then write a diary entry and then disconnect
 
 # Dependencies
@@ -22,4 +22,5 @@ Diary to log experiences, movies, songs, photos...
 - Vim
 
 # Install
-Execute `./install` it may need sudo privileges
+Create a truecrypt container and enter it's path into sdy
+    CONTAINER=/path/to/container
